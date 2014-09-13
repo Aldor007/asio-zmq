@@ -7,8 +7,8 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <asio/error_code.hpp>
-#include <asio/io_service.hpp>
+#include <boost/system/error_code.hpp>
+#include <boost/asio/io_service.hpp>
 #include <zmq.h>
 #include "helpers.hpp"
 #include "socket_option.hpp"
@@ -22,13 +22,13 @@ class socket {
 private:
     typedef std::unique_ptr<void, socket_deleter> zsocket_type;
 
-    asio::io_service& io_;
+    boost::asio::io_service& io_;
     descriptor_type descriptor_;
     zsocket_type zsock_;
 
     template <typename OutputIt, typename ReadHandlerPtr>
     void read_one_message(OutputIt buff_it, ReadHandlerPtr handler,
-                          asio::error_code const& ec) {
+                          boost::system::error_code const& ec) {
         if (ec) {
             io_.post(std::bind(*handler, ec));
             return;
@@ -38,10 +38,10 @@ private:
             if (is_readable()) {
                 read_message(buff_it);
                 io_.post(
-                    std::bind(*handler, asio::error_code()));
+                    std::bind(*handler, boost::system::error_code()));
             } else {
                 descriptor_.async_read_some(
-                    asio::null_buffers(),
+                    boost::asio::null_buffers(),
                     std::bind(
                         &socket::read_one_message<OutputIt, ReadHandlerPtr>,
                         this, buff_it,
@@ -55,7 +55,7 @@ private:
     template <typename InputIt, typename WriteHandlerPtr>
     void write_one_message(InputIt first_it, InputIt last_it,
                            WriteHandlerPtr handler,
-                           asio::error_code const& ec) {
+                           boost::system::error_code const& ec) {
         if (ec) {
             io_.post(std::bind(*handler, ec));
             return;
@@ -64,10 +64,10 @@ private:
         try {
             if (is_writable()) {
                 write_message(first_it, last_it);
-                io_.post(std::bind(*handler, asio::error_code()));
+                io_.post(std::bind(*handler, boost::system::error_code()));
             } else {
                 descriptor_.async_write_some(
-                    asio::null_buffers(),
+                    boost::asio::null_buffers(),
                     std::bind(
                         &socket::write_one_message<InputIt, WriteHandlerPtr>,
                         this, first_it, last_it, handler,
@@ -79,7 +79,7 @@ private:
     }
 
 public:
-    explicit socket(asio::io_service& io, context& ctx, int type)
+    explicit socket(boost::asio::io_service& io, context& ctx, int type)
         : io_(io), descriptor_(io),
           zsock_(::zmq_socket(ctx.zctx_.get(), type)) {
         if (!zsock_) {
@@ -160,7 +160,7 @@ public:
     void async_read_message(OutputIt buff_it, ReadHandler handler) {
         read_one_message(buff_it,
                          std::make_shared<ReadHandler>(handler),
-                         asio::error_code());
+                         boost::system::error_code());
     }
 
     template <typename InputIt, typename WriteHandler>
@@ -168,7 +168,7 @@ public:
                              WriteHandler handler) {
         write_one_message(first_it, last_it,
                           std::make_shared<WriteHandler>(handler),
-                          asio::error_code());
+                          boost::system::error_code());
     }
 
     template <typename Option>

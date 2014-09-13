@@ -4,8 +4,8 @@
 #include <string>
 #include <system_error>
 #include <type_traits>
-#include <asio/error.hpp>
-#include <asio/error_code.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/system/error_code.hpp>
 #include <zmq.h>
 
 namespace asio {
@@ -13,7 +13,7 @@ namespace error {
 
 enum class zmq_error {};
 
-struct zmq_error_category_impl : public asio::error_category
+struct zmq_error_category_impl : public boost::system::error_category
 {
     virtual const char* name() const noexcept
     {
@@ -26,15 +26,15 @@ struct zmq_error_category_impl : public asio::error_category
     }
 };
 
-const asio::error_category& zmq_category()
+const boost::system::error_category& zmq_category()
 {
     static zmq_error_category_impl instance;
     return instance;
 }
 
-asio::error_code make_error_code(zmq_error e)
+boost::system::error_code make_error_code(zmq_error e)
 {
-    return asio::error_code(static_cast<int>(e), zmq_category());
+    return boost::system::error_code(static_cast<int>(e), zmq_category());
 }
 
 } // namespace error

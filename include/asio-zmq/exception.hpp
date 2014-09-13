@@ -3,6 +3,11 @@
 
 #include <exception>
 #include <zmq.h>
+#include <boost/system/error_code.hpp>
+#include <boost/asio/error.hpp>
+
+
+
 #include "error.hpp"
 
 namespace asio {
@@ -21,7 +26,7 @@ public:
         return zmq_strerror(errno_);
     }
 
-    asio::error_code get_code() const
+    boost::system::error_code get_code() const
     {
         return asio::error::make_error_code(
             static_cast<asio::error::zmq_error>(errno_));
